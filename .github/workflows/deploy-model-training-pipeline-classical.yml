@@ -6,78 +6,111 @@ on:
   pull_request:
     branches: [ main ]
 
-# optional: avoid overlapping runs on the same branch
 concurrency:
   group: deploy-model-training-pipeline-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   get-config:
-    uses: Azure/mlops-templates/.github/workflows/read-yaml.yml@main
-    with:
-      file_name: config-infra-prod.yml
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          # OR if you use individual secrets:
+          # client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          # tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          # subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          # client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Get Config
+        uses: Azure/mlops-templates/.github/workflows/read-yaml.yml@main
+        with:
+          file_name: config-infra-prod.yml
 
   create-compute:
     needs: get-config
-    uses: ./.github/workflows/custom-create-compute.yml
-    with:
-      cluster_name: test-cluster
-      size: Standard_DS11_v2
-      min_instances: 0
-      max_instances: 1
-      cluster_tier: dedicated
-      resource_group: ${{ needs.get-config.outputs.resource_group }}
-      workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
-    secrets:
-      # JSON creds (for workflows that use azure/login with "creds:")
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-      # Individual fields (for workflows that use azure/login with client-id/tenant-id/...)
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Compute
+        uses: ./.github/workflows/custom-create-compute.yml
+        with:
+          cluster_name: test-cluster
+          size: Standard_DS11_v2
+          min_instances: 0
+          max_instances: 1
+          cluster_tier: dedicated
+          resource_group: ${{ needs.get-config.outputs.resource_group }}
+          workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
 
   register-dataset:
     needs: get-config
-    uses: ./.github/workflows/custom-register-dataset.yml
-    with:
-      resource_group: ${{ needs.get-config.outputs.resource_group }}
-      workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
-      name: machine-failure-data
-      data_file: mlops/azureml/train/data.yml
-    secrets:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Register Dataset
+        uses: ./.github/workflows/custom-register-dataset.yml
+        with:
+          resource_group: ${{ needs.get-config.outputs.resource_group }}
+          workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
+          name: machine-failure-data
+          data_file: mlops/azureml/train/data.yml
 
   register-environment:
     needs: get-config
-    uses: ./.github/workflows/custom-register-environment.yml
-    with:
-      resource_group: ${{ needs.get-config.outputs.resource_group }}
-      workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
-      environment_file: mlops/azureml/train/train-env.yml
-      conda_file: data-science/environment/train-conda.yml
-    secrets:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Register Environment
+        uses: ./.github/workflows/custom-register-environment.yml
+        with:
+          resource_group: ${{ needs.get-config.outputs.resource_group }}
+          workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
+          environment_file: mlops/azureml/train/train-env.yml
+          conda_file: data-science/environment/train-conda.yml
 
   run-pipeline:
     needs: [get-config, register-environment, create-compute, register-dataset]
-    uses: ./.github/workflows/custom-run-pipeline.yml
-    with:
-      resource_group: ${{ needs.get-config.outputs.resource_group }}
-      workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
-      parameters-file: mlops/azureml/train/newpipeline.yml
-      job-name: mlops-pipeline
-    secrets:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Run Pipeline
+        uses: ./.github/workflows/custom-run-pipeline.yml
+        with:
+          resource_group: ${{ needs.get-config.outputs.resource_group }}
+          workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
+          parameters-file: mlops/azureml/train/newpipeline.yml
+          job-name: mlops-pipeline
