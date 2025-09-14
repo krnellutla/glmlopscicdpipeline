@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+.env
+
+# Data & outputs
+outputs/
+model/
+*.log
+
+# OS / IDE
+.DS_Store
+.vscode/
+.ipynb_checkpoints/
+
+# Azure ML local cache
+azureml/
+mlruns/
