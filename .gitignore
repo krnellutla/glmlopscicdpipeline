@@ -18,5 +18,4 @@ model/
 .ipynb_checkpoints/
 
 # Azure ML local cache
-azureml/
 mlruns/
