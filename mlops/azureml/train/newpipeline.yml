@@ -24,7 +24,7 @@ settings:
 
 jobs:
   prep_data:
-    name: prep_data   # Provide the job name
+    name: prep_data_${{ github.run_id }}   # Provide the job name
     display_name: prepare-data   # Provide the display name for the job
     code: ../../../data-science/src
     command: >-
@@ -40,7 +40,7 @@ jobs:
       test_data: ${{parent.outputs.test_data}}
 
   sweep_step:
-    name: sweep_training
+    name: sweep_training_${{ github.run_id }}
     display_name: sweep-training  # Hint: Provide the display name for the job
     type: sweep
     inputs:
@@ -67,7 +67,7 @@ jobs:
       timeout: 7200
 
   register_model:
-    name: register_model   # Provide the job name
+    name: register_model_${{ github.run_id }}   # Provide the job name
     display_name: register-model   # Provide the display name for the job
     code: ../../../data-science/src
     command: >-
