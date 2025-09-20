@@ -69,3 +69,4 @@ if __name__ == "__main__":
     main(args)
 
     mlflow.end_run()
+    # end workflow run
