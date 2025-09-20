@@ -1,6 +1,7 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
 type: command  # This is correct for trial definitions
 display_name: train_model
+name: train_model_${{ github.run_id }}  # Unique name for the component
 
 inputs: 
   train_data:
